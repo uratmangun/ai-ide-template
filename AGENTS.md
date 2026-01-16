@@ -29,9 +29,9 @@ When executing terminal commands or writing shell scripts:
 When working with web applications or development environments:
 @.opencode/rules/no-auto-start-dev-server.mdc
 
-### Git Workflow
-When committing changes or pushing to remote repositories:
-@.opencode/rules/auto-commit-push-workflow.mdc
+### Commit Messages
+When writing commit messages:
+@.opencode/rules/commit-message-conventions.mdc
 
 ## General Guidelines
 

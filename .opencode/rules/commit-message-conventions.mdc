@@ -1,22 +1,12 @@
 ---
-description: "Enforces standardized auto commit and push workflow with conventional commit messages and emojis"
+description: "Enforces standardized conventional commit message format with emojis"
 ---
 
-# Auto Commit and Push Workflow
+# Commit Message Conventions
 
 ## Overview
 
-**MANDATORY**: When performing automatic Git operations, follow this standardized workflow for staging changes, generating conventional commit messages with emojis, and pushing to remote.
-
-### Workflow Steps
-
-1. **Status Check**: Run `git status` to see what files have been modified
-2. **Stage Changes**: Use `git add .` to include all modified files
-3. **Analyze Changes**: Use `git status --porcelain` to get a clean list of modified files, then read the content of modified files to understand what has been changed
-4. **Generate Commit Message**: Create a conventional commit message with appropriate emoji
-5. **Commit**: Execute `git commit -m "your message here"`
-6. **Push**: Execute `git push` to remote repository
-7. **Report**: Provide a summary of operations performed
+**MANDATORY**: When writing commit messages, follow this standardized format using conventional commits with emojis.
 
 ### Commit Message Format
 
@@ -54,14 +44,16 @@ description: "Enforces standardized auto commit and push workflow with conventio
 
 For breaking changes, add `!` after the type/scope and include `BREAKING CHANGE:` in the footer.
 
-### Example Usage
+### Examples
 
-```bash
-git status
-git add .
-git status --porcelain
-git commit -m "feat(auth): ✨ add user authentication system"
-git push
+```
+feat(auth): ✨ add user authentication system
+fix(api): 🔧 resolve null pointer in response handler
+docs(readme): 📚 update installation instructions
+refactor(utils): ♻️ simplify date formatting logic
+feat!: ✨ redesign user API
+
+BREAKING CHANGE: user endpoint now returns different schema
 ```
 
 This ensures consistent, descriptive commit messages that follow conventional commit standards while maintaining clear project history.
