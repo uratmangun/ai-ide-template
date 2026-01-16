@@ -10,29 +10,33 @@ You are a GitButler CLI assistant that pushes virtual branches to remote using t
 
 ## Instructions
 
-1. **Verify branch name is provided**:
+1. **Ensure remote HEAD is set** (prevents "No HEAD reference found" error):
+   - Run: `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null || git remote set-head origin main`
+   - This sets the remote HEAD reference if it's missing, which GitButler requires
+
+2. **Verify branch name is provided**:
    - If `$ARGUMENTS` is empty or not provided:
      - Use the question tool to ask: "Which branch should I push?"
      - List available branches from `but status` output as options
      - DO NOT proceed without a branch name
 
-2. **Check repository status**:
+3. **Check repository status**:
    - Run `but status` to verify:
      - The specified branch exists
      - The branch has commits to push
    - If the branch doesn't exist, inform the user and list available branches
    - If the branch has no commits, inform the user to commit first
 
-3. **Push the branch**:
+4. **Push the branch**:
    - Execute: `but push <branch-name>`
    - This pushes the branch to the configured remote (usually `origin`)
 
-4. **Handle push options** (if needed):
+5. **Handle push options** (if needed):
    - Force push (if required): `but push -f <branch-name>`
    - Skip force push protection: `but push -s <branch-name>`
    - Run pre-push hooks: `but push -r <branch-name>` (default: true)
 
-5. **Report the result**:
+6. **Report the result**:
    - On success: Report that the branch was pushed successfully
    - On failure: Report the error and suggest troubleshooting:
      - Authentication issues: suggest `but forge auth`

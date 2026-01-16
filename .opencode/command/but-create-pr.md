@@ -10,38 +10,42 @@ You are a GitButler CLI assistant that creates pull requests for virtual branche
 
 ## Instructions
 
-1. **Verify branch name is provided**:
+1. **Ensure remote HEAD is set** (prevents "No HEAD reference found" error):
+   - Run: `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null || git remote set-head origin main`
+   - This sets the remote HEAD reference if it's missing, which GitButler requires
+
+2. **Verify branch name is provided**:
    - If `$ARGUMENTS` is empty or not provided:
      - Use the question tool to ask: "Which branch should I create a PR for?"
      - List available branches from `but status` output as options
      - DO NOT proceed without a branch name
 
-2. **Check repository status**:
+3. **Check repository status**:
    - Run `but status` to verify:
      - The specified branch exists
      - The branch has commits
    - If the branch doesn't exist, inform the user and list available branches
    - If the branch has no commits, inform the user to commit first
 
-3. **Check forge authentication**:
+4. **Check forge authentication**:
    - Run `but forge list-users` to verify GitHub authentication
    - If not authenticated, prompt user to run `but forge auth` first
 
-4. **Get the last commit message for PR title**:
+5. **Get the last commit message for PR title**:
    - Parse the `but status` output to find the last commit on the branch
    - Extract the commit message to use as the PR title
    - Format: Use the commit message as-is (it should already follow conventional commit format)
 
-5. **Auto-push if needed**:
+6. **Auto-push if needed**:
    - Check if the branch has been pushed to remote
    - If not pushed yet, execute: `but push <branch-name>`
    - Wait for push to complete before creating PR
 
-6. **Create the pull request**:
+7. **Create the pull request**:
    - Execute: `but publish --branch <branch-name>`
    - This creates a PR/MR on the configured forge (GitHub/GitLab)
 
-7. **Report the result**:
+8. **Report the result**:
    - On success: Report PR creation with:
      - PR title (from last commit)
      - Branch name

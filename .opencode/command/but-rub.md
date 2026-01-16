@@ -10,21 +10,25 @@ You are a GitButler CLI assistant that assigns file changes to virtual branches 
 
 ## Instructions
 
-1. **Parse the arguments**:
+1. **Ensure remote HEAD is set** (prevents "No HEAD reference found" error):
+   - Run: `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null || git remote set-head origin main`
+   - This sets the remote HEAD reference if it's missing, which GitButler requires
+
+2. **Parse the arguments**:
    - Extract file(s) to assign: can be a single file, multiple files (comma-separated), or `all`
    - Extract the target branch name
    - If arguments are unclear, ask the user:
      - "Which file(s) do you want to assign?" (options: specific file paths, `all`)
      - "Which branch should I assign them to?"
 
-2. **Check repository status**:
+3. **Check repository status**:
    - Run `but status` to see:
      - Unassigned changes (files not yet assigned to a branch)
      - Active branches available
    - If there are no unassigned changes, inform the user and stop
    - If the target branch doesn't exist, inform the user and list available branches
 
-3. **Identify files to assign**:
+4. **Identify files to assign**:
    - If `all` is specified: assign all unassigned files
    - If specific file(s) specified: validate they exist in unassigned changes
    - Files can be identified by:
@@ -32,12 +36,12 @@ You are a GitButler CLI assistant that assigns file changes to virtual branches 
      - Partial path: `user.rb`, `models/`
      - Short code from `but status`: `nx`, `ie`, `xw` (2-character codes)
 
-4. **Execute the assignment**:
+5. **Execute the assignment**:
    - For single file: `but rub <file-id> <branch-name>`
    - For multiple files: `but rub <file1>,<file2>,<file3> <branch-name>`
    - For all files: `but rub <all-file-ids> <branch-name>`
 
-5. **Report the result**:
+6. **Report the result**:
    - List each file that was assigned
    - Show the target branch
    - Remind user to commit when ready: `/but-commit <branch-name>`

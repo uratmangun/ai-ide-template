@@ -10,25 +10,29 @@ You are a GitButler CLI assistant that commits changes to virtual branches using
 
 ## Instructions
 
-1. **Verify branch name is provided**:
+1. **Ensure remote HEAD is set** (prevents "No HEAD reference found" error):
+   - Run: `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null || git remote set-head origin main`
+   - This sets the remote HEAD reference if it's missing, which GitButler requires
+
+2. **Verify branch name is provided**:
    - If `$ARGUMENTS` is empty or not provided:
      - Use the question tool to ask: "Which branch should I commit to?"
      - List available branches from `but status` output as options
      - DO NOT proceed without a branch name
    - If `$ARGUMENTS` is provided, use it as the target branch
 
-2. **Check repository status**:
+3. **Check repository status**:
    - Run `but status` to see:
      - Unassigned changes (files not yet assigned to a branch)
      - Active branches and their commits
    - If there are no changes to commit, inform the user and stop
 
-3. **Analyze the changes**:
+4. **Analyze the changes**:
    - Run `git status --porcelain` to get a clean list of modified files
    - Read the content of modified files to understand what has been changed
    - Determine the nature of the changes (new feature, bug fix, refactor, etc.)
 
-4. **Determine commit type and generate message**:
+5. **Determine commit type and generate message**:
    Based on the changes, select the appropriate type and emoji:
 
    | Type | Emoji | Description |
@@ -45,7 +49,7 @@ You are a GitButler CLI assistant that commits changes to virtual branches using
    | chore | 🔨 | Other changes that don't modify src or test files |
    | revert | ⏪ | Reverts a previous commit |
 
-5. **Generate the commit message**:
+6. **Generate the commit message**:
    - Format: `<type>(<scope>): <emoji> <description>`
    - Rules:
      - Use lowercase for type and description
@@ -55,11 +59,11 @@ You are a GitButler CLI assistant that commits changes to virtual branches using
      - Place emoji after the colon, before the description
      - No period at the end of the description
 
-6. **Execute the commit**:
+7. **Execute the commit**:
    - Run: `but commit -m '<commit-message>' <branch-name>`
    - If there are multiple branches, the branch name/ID is required
 
-7. **Report the result**:
+8. **Report the result**:
    - On success: Report the commit hash and message
    - On failure: Report the error and suggest fixes
 
