@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "skills": {
+    "agent-browser": {
+      "source": "vercel-labs/agent-browser",
+      "sourceType": "github",
+      "computedHash": "8e8d3042a04e6494e6d02b67eb9a97e76cdd63533c24ab507c9bf618a752e985"
+    },
+    "but": {
+      "source": "gitbutlerapp/gitbutler",
+      "sourceType": "github",
+      "computedHash": "97431bc5a03efd9c17f16bb36b4ae24275d565509207cd78d5a50b8d6f038c1f"
+    },
+    "cloudflare": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "computedHash": "5fa3a4f1e035a6372a79eddedec5014878e256c93e64bcc3fbc5af3fdf5ee5d5"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+    },
+    "mcporter": {
+      "source": "steipete/clawdis",
+      "sourceType": "github",
+      "computedHash": "295be6858c69890f9566e849aade58e2d8db93c3ce49e11dba40b8ae33dd2419"
+    },
+    "pilotty": {
+      "source": "msmps/pilotty",
+      "sourceType": "github",
+      "computedHash": "0d845bcd0eda2296197a40bcce918afe6e05ea1ded6601a2aaf16da583531826"
+    },
+    "skill-creator": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "a096b9af85c9d954374ebe3f7a23b5b7737ed3f35fe2a8f5893742c4e00dba1c"
+    }
+  }
+}
