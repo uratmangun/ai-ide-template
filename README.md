@@ -64,9 +64,8 @@ cd my-new-repo
 
 This template comes pre-configured with:
 
-- **`.agent/`** - Agent workflow configurations
+- **`.agents/skills`** - Agent skills configurations
 - **`.cursor/`** - Cursor IDE settings
-- **`.kiro/`** - Kiro AI assistant configurations
 - **`index.html`** - Template landing page
 
 ## 🔧 After Cloning
