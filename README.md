@@ -2,7 +2,7 @@
 
 A minimal template for AI-powered IDE projects with pre-configured settings for popular AI coding assistants.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Furatmangun%2Fai-ide-template)
+[Deploy to Cloudflare Pages with Wrangler CLI](https://developers.cloudflare.com/pages/framework-guides/deploy-a-static-html-site/)
 
 ## 🚀 Quick Start
 
@@ -80,21 +80,24 @@ This template comes pre-configured with:
    - Update `index.html` with your project details
    - Modify AI assistant configurations as needed
 
-3. **Deploy to Vercel (optional):**
+3. **Deploy to Cloudflare Pages with Wrangler CLI (optional):**
    ```bash
-   # Install Vercel CLI
-   npm i -g vercel
-   
-   # Deploy
-   vercel --prod
-   
-   # Link to GitHub for auto-deployments
-   vercel git connect
+   # Install Wrangler CLI
+   bun add -g wrangler
+
+   # Authenticate with Cloudflare
+   wrangler login
+
+   # Create a Pages project (one-time setup)
+   wrangler pages project create my-new-repo
+
+   # Deploy the current directory
+   wrangler pages deploy . --project-name my-new-repo
    ```
 
 ## 🌐 Live Demo
 
-Visit the template landing page: [https://ai-ide-template.vercel.app](https://ai-ide-template.vercel.app)
+Visit the template landing page: [https://ai-ide-template.pages.dev](https://ai-ide-template.pages.dev)
 
 ## 📝 License
 
