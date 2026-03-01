@@ -1,0 +1,59 @@
+---
+description: Enforce conventional commit messages with emojis
+alwaysApply: false
+globs: "**/*"
+---
+
+# Commit Message Conventions
+
+## Overview
+
+Follow this standardized format when writing commit messages using conventional commits with emojis.
+
+## Commit Message Format
+
+```
+<type>(<scope>): <emoji> <description>
+[optional body]
+[optional footer(s)]
+```
+
+## Types and Emojis
+
+- feat: ✨ A new feature
+- fix: 🔧 A bug fix
+- docs: 📚 Documentation-only changes
+- style: 💎 Changes that do not affect code meaning
+- refactor: ♻️ Code change that neither fixes a bug nor adds a feature
+- perf: ⚡ Performance improvement
+- test: ✅ Add or correct tests
+- build: 📦 Build system or dependency changes
+- ci: ⚙️ CI configuration/script changes
+- chore: 🔨 Other changes outside src/test
+- revert: ⏪ Revert a previous commit
+
+## Rules
+
+1. Use lowercase for type and description.
+2. Keep description under 50 characters when possible.
+3. Use imperative mood (`add`, not `added` or `adds`).
+4. Include scope when relevant.
+5. Put emoji after the colon and before description.
+6. Do not end description with a period.
+7. Use a body for additional context if needed.
+
+## Breaking Changes
+
+For breaking changes, add `!` after the type/scope and include `BREAKING CHANGE:` in the footer.
+
+## Examples
+
+```
+feat(auth): ✨ add user authentication system
+fix(api): 🔧 resolve null pointer in handler
+docs(readme): 📚 update installation instructions
+refactor(utils): ♻️ simplify date formatting logic
+feat!: ✨ redesign user api
+
+BREAKING CHANGE: user endpoint now returns different schema
+```
