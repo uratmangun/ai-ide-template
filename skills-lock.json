@@ -21,6 +21,11 @@
       "sourceType": "github",
       "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
     },
+    "gh-cli": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "computedHash": "cbe644b0c6760ae2a1eaafa39133920d889331327065d92a131675a665273e56"
+    },
     "mcporter": {
       "source": "steipete/clawdis",
       "sourceType": "github",
@@ -35,6 +40,11 @@
       "source": "anthropics/skills",
       "sourceType": "github",
       "computedHash": "a096b9af85c9d954374ebe3f7a23b5b7737ed3f35fe2a8f5893742c4e00dba1c"
+    },
+    "wrangler": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "computedHash": "6689701b4ec7e5c626db8f84eea5ecc59e1ea5d4328219a971ba41426361dfde"
     }
   }
 }
