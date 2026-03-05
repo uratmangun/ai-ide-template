@@ -39,6 +39,29 @@ description: "Enforces standardized conventional commit message format with emoj
 5. Always place the emoji after the colon, before the description
 6. No period at the end of the description
 7. Use body for additional context if needed (separate with blank line)
+8. Never use `Made-with: Cursor` in commit messages
+9. When attributing Cursor, use a Git trailer in footer format: `Co-authored-by: Cursor <cursoragent@cursor.com>`
+10. Keep at least one blank line between the commit body and trailer lines
+
+### Cursor Co-Author Attribution
+
+Use GitHub-compatible co-author trailers (per Git trailer format) instead of custom attribution text.
+
+Correct:
+
+```
+feat(scope): ✨ add feature
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+```
+
+Incorrect:
+
+```
+feat(scope): ✨ add feature
+
+Made-with: Cursor
+```
 
 ### Breaking Changes
 
