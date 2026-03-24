@@ -6,6 +6,11 @@
       "sourceType": "github",
       "computedHash": "8e8d3042a04e6494e6d02b67eb9a97e76cdd63533c24ab507c9bf618a752e985"
     },
+    "agents": {
+      "source": "elevenlabs/skills",
+      "sourceType": "github",
+      "computedHash": "18ddb1893c48233e73674aa00a28c62f75b55901ac7d24190575e72397a2b27a"
+    },
     "but": {
       "source": "gitbutlerapp/gitbutler",
       "sourceType": "github",
