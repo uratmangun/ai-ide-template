@@ -19,11 +19,6 @@ Instructions:
 When creating UI components, styling, or choosing color palettes:
 @.opencode/rules/ui-color-prefer-non-purple-primary.mdc
 
-### Shell Commands
-
-When executing terminal commands or writing shell scripts:
-@.opencode/rules/shell-preferences.mdc
-
 ### Commit Messages
 
 When writing commit messages:
