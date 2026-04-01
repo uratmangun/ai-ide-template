@@ -66,7 +66,7 @@ This template comes pre-configured with:
 
 - **`.agents/skills`** - Agent skills configurations
 - **`.cursor/`** - Cursor IDE settings
-- **`index.html`** - Template landing page
+- **`public/index.html`** - Template landing page
 
 ## 🔧 After Cloning
 
@@ -76,7 +76,7 @@ This template comes pre-configured with:
    ```
 
 2. **Customize the template:**
-   - Update `index.html` with your project details
+   - Update `public/index.html` with your project details
    - Modify AI assistant configurations as needed
 
 3. **Deploy to Cloudflare Pages with Wrangler CLI (optional):**

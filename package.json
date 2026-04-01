@@ -1,0 +1,29 @@
+{
+  "name": "ai-ide-template",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AI IDE Template with a Hono-powered Cloudflare Worker chat proxy.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "wrangler deploy --dry-run",
+    "cf-typegen": "wrangler types",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uratmangun/ai-ide-template.git"
+  },
+  "bugs": {
+    "url": "https://github.com/uratmangun/ai-ide-template/issues"
+  },
+  "homepage": "https://github.com/uratmangun/ai-ide-template#readme",
+  "dependencies": {
+    "hono": "^4.12.9"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.2",
+    "wrangler": "^4.79.0"
+  }
+}
