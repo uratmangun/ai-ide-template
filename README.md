@@ -1,107 +1,89 @@
 # AI IDE Template
 
-A minimal template for AI-powered IDE projects with pre-configured settings for popular AI coding assistants.
+A Next.js App Router template with AI SDK streaming chat, shadcn/ui + AI Elements UI, and VPS deployment via Podman + Cloudflare Tunnel.
 
-[Deploy to Cloudflare Pages with Wrangler CLI](https://developers.cloudflare.com/pages/framework-guides/deploy-a-static-html-site/)
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-Make sure you have the [GitHub CLI](https://cli.github.com/) installed:
+## Quick start
 
 ```bash
-# macOS
-brew install gh
-
-# Windows
-winget install --id GitHub.cli
-
-# Linux (Debian/Ubuntu)
-sudo apt install gh
-
-# Authenticate with GitHub
-gh auth login
+pnpm install
+pnpm dev
 ```
 
-### Clone this Template
+Open `http://localhost:3000`.
 
-Use the GitHub CLI to create a new repository from this template:
-
-#### Create a Private Repository (Recommended)
+## Clone this template
 
 ```bash
 gh repo create my-new-repo --template uratmangun/ai-ide-template --private --clone
 ```
 
-#### Create a Public Repository
+## Scripts
+
+- `pnpm dev` – Next.js dev server
+- `pnpm build` – production build
+- `pnpm start` – run production server
+- `pnpm lint` – ESLint
+- `pnpm typecheck` – TypeScript check
+
+## Docker (standalone)
 
 ```bash
-gh repo create my-new-repo --template uratmangun/ai-ide-template --public --clone
+podman build -t ai-ide-template:latest .
+podman run --rm -p 3000:3000 ai-ide-template:latest
 ```
 
-### Command Options
+## VPS Podman quadlet
 
-| Flag | Description |
-|------|-------------|
-| `--template` | Specify the template repository to use |
-| `--private` | Create a private repository |
-| `--public` | Create a public repository |
-| `--clone` | Clone the new repository to your local machine |
+Create `/etc/containers/systemd/ai-ide-template.container`:
 
-### Additional Options
+```ini
+[Unit]
+Description=AI IDE Template (Next.js)
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=localhost/ai-ide-template:latest
+ContainerName=ai-ide-template
+PublishPort=3000:3000
+Environment=NODE_ENV=production
+Restart=always
+
+[Service]
+Restart=always
+TimeoutStartSec=900
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then:
 
 ```bash
-# Create without cloning (useful for remote-only setup)
-gh repo create my-new-repo --template uratmangun/ai-ide-template --private
-
-# Clone to a specific directory
-gh repo create my-new-repo --template uratmangun/ai-ide-template --private --clone
-cd my-new-repo
+sudo systemctl daemon-reload
+sudo systemctl enable --now ai-ide-template.service
+curl -I http://127.0.0.1:3000
 ```
 
-## 📁 What's Included
+## Cloudflare Tunnel ingress
 
-This template comes pre-configured with:
+Add ingress in your `cloudflared` config:
 
-- **`.agents/skills`** - Agent skills configurations
-- **`.cursor/`** - Cursor IDE settings
-- **`public/index.html`** - Template landing page
+```yaml
+ingress:
+  - hostname: ai-template.uratmangun.ovh
+    service: http://127.0.0.1:3000
+  - service: http_status:404
+```
 
-## 🔧 After Cloning
+Apply DNS route once:
 
-1. **Navigate to your new project:**
-   ```bash
-   cd my-new-repo
-   ```
+```bash
+cloudflared tunnel route dns <TUNNEL_NAME_OR_ID> ai-template.uratmangun.ovh
+```
 
-2. **Customize the template:**
-   - Update `public/index.html` with your project details
-   - Modify AI assistant configurations as needed
+Restart tunnel service/container and verify:
 
-3. **Deploy to Cloudflare Pages with Wrangler CLI (optional):**
-   ```bash
-   # Install Wrangler CLI
-   bun add -g wrangler
-
-   # Authenticate with Cloudflare
-   wrangler login
-
-   # Create a Pages project (one-time setup)
-   wrangler pages project create my-new-repo
-
-   # Deploy the current directory
-   wrangler pages deploy . --project-name my-new-repo
-   ```
-
-## 🌐 Live Demo
-
-Visit the template landing page: [https://ai-ide-template.pages.dev](https://ai-ide-template.pages.dev)
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-Made with ❤️ for the AI-assisted development community
+```bash
+curl -I https://ai-template.uratmangun.ovh
+```

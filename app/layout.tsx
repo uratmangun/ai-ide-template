@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Manrope, Geist } from "next/font/google";
+import { Geist, IBM_Plex_Mono } from "next/font/google";
 
-import "./globals.css";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+import "./globals.css";
+
+const sans = Geist({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 const mono = IBM_Plex_Mono({
   variable: "--font-mono",
@@ -24,8 +29,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full", "antialiased", mono.variable, "font-sans", geist.variable)}>
-      <body className="min-h-full bg-background text-foreground">{children}</body>
+    <html className={cn("h-full antialiased", sans.variable, mono.variable)} lang="en">
+      <body className="min-h-full bg-background text-foreground">
+        <TooltipProvider>{children}</TooltipProvider>
+      </body>
     </html>
   );
 }

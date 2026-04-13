@@ -1,3 +1,9 @@
 node_modules/
+.next/
+out/
+coverage/
 .wrangler/
 .dev.vars
+tsconfig.tsbuildinfo
+.env*
+!.env.example
