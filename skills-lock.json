@@ -4,12 +4,12 @@
     "agent-browser": {
       "source": "vercel-labs/agent-browser",
       "sourceType": "github",
-      "computedHash": "8e8d3042a04e6494e6d02b67eb9a97e76cdd63533c24ab507c9bf618a752e985"
+      "computedHash": "91782f423f6fad0fe4e2159350f2eb8c3cf66cfa4d2387b2c8d927d443c9a603"
     },
     "agents": {
       "source": "elevenlabs/skills",
       "sourceType": "github",
-      "computedHash": "18ddb1893c48233e73674aa00a28c62f75b55901ac7d24190575e72397a2b27a"
+      "computedHash": "9ddb039f74bb5a3d5fcd30f1107abd7b146e7feb0592c9ec7637622523ad43f1"
     },
     "but": {
       "source": "gitbutlerapp/gitbutler",
@@ -46,6 +46,11 @@
       "sourceType": "github",
       "computedHash": "19853b718a63cde339b1d5fb80ab8051738505b5940111b976888d6ab7351b32"
     },
+    "music": {
+      "source": "elevenlabs/skills",
+      "sourceType": "github",
+      "computedHash": "9d42e873a5f9ff3de54742e598f5f8321f12f7ae2b38de08bb40fb78b113bb01"
+    },
     "pilotty": {
       "source": "msmps/pilotty",
       "sourceType": "github",
@@ -56,10 +61,30 @@
       "sourceType": "github",
       "computedHash": "f914845954227725e3a2e8504e10779e79c1adde046b43c9046bf49e7ef262d1"
     },
+    "setup-api-key": {
+      "source": "elevenlabs/skills",
+      "sourceType": "github",
+      "computedHash": "45e680b4a199bb031472fc28e752abc29bc2a38334cf5c80e1428c3f9fa33083"
+    },
     "skill-creator": {
       "source": "anthropics/skills",
       "sourceType": "github",
       "computedHash": "a096b9af85c9d954374ebe3f7a23b5b7737ed3f35fe2a8f5893742c4e00dba1c"
+    },
+    "sound-effects": {
+      "source": "elevenlabs/skills",
+      "sourceType": "github",
+      "computedHash": "54ec05122413cbc956b28fbd81c676e44eb0fdbbf6459ee3b367b2c7a1350b02"
+    },
+    "speech-to-text": {
+      "source": "elevenlabs/skills",
+      "sourceType": "github",
+      "computedHash": "e3933b0c7d935af0953035fab416f65d9c92e66cc9d7a700eb034a429d5c8107"
+    },
+    "text-to-speech": {
+      "source": "elevenlabs/skills",
+      "sourceType": "github",
+      "computedHash": "dccf9155f284345ade4a5af5d3c3db5d5da77856011ff92fff725160b0df8370"
     },
     "webauthx": {
       "source": "wevm/webauthx",

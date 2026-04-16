@@ -163,7 +163,7 @@ server connections.
 ```
 
 Workspace auth connections support OAuth2 client credentials, OAuth2 JWT, private key JWT,
-basic auth, bearer auth, and custom header auth.
+basic auth, bearer auth, custom header auth, and mutual TLS (`mtls`).
 
 System dynamic variables are also available in tool parameters and headers. Use
 `{{system__conversation_history}}` when a webhook or sub-agent needs the full conversation
@@ -250,6 +250,53 @@ const conversation = await Conversation.startSession({
     },
   },
 });
+```
+
+### React Registration with `useConversationClientTool`
+
+When you use the React SDK, wrap your component tree in `ConversationProvider` and register
+client tools from components with `useConversationClientTool`. Handlers are cleaned up
+automatically on unmount and always use the latest closure value. Prefer granular hooks such as
+`useConversationControls` and `useConversationStatus` for the session UI; `useConversation`
+remains available when you want the full conversation object in one hook.
+
+```typescript
+import {
+  ConversationProvider,
+  useConversationClientTool,
+  useConversationControls,
+  useConversationStatus,
+} from "@elevenlabs/react";
+
+function Storefront() {
+  useConversationClientTool("show_product", async ({ productId }) => {
+    const modal = document.getElementById("product-modal");
+    modal.innerHTML = await fetchProductCard(productId);
+    modal.showModal();
+    return { success: true };
+  });
+
+  const { startSession, endSession } = useConversationControls();
+  const { status } = useConversationStatus();
+
+  if (status === "connected") {
+    return <button onClick={endSession}>End</button>;
+  }
+
+  return (
+    <button onClick={() => startSession({ agentId: "your-agent-id" })}>
+      Start
+    </button>
+  );
+}
+
+function App() {
+  return (
+    <ConversationProvider>
+      <Storefront />
+    </ConversationProvider>
+  );
+}
 ```
 
 ### Registering Client Tools with Agent
