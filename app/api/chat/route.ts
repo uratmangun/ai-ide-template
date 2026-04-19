@@ -15,6 +15,7 @@ const requestSchema = z.object({
   model: z.string().trim().default(DEFAULT_MODEL),
   baseURL: z.string().trim().default(""),
   apiKey: z.string().trim().optional(),
+  systemPrompt: z.string().optional(),
 });
 
 function toValidationResponse(message: string, status = 400) {
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
     return toValidationResponse("Invalid chat request payload.");
   }
 
-  const { messages, model, baseURL, apiKey } = parsed.data;
+  const { messages, model, baseURL, apiKey, systemPrompt } = parsed.data;
 
   const validatedBaseUrl = validateProviderBaseUrl(baseURL);
 
@@ -60,9 +61,11 @@ export async function POST(request: Request) {
     apiKey: apiKey?.trim() || undefined,
   });
 
+  const resolvedSystemPrompt = systemPrompt?.trim() || REPO_SYSTEM_PROMPT;
+
   const result = streamText({
     model: provider.chatModel(model || DEFAULT_MODEL),
-    system: REPO_SYSTEM_PROMPT,
+    system: resolvedSystemPrompt,
     messages: modelMessages,
   });
 

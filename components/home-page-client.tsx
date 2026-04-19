@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import type { UiModel } from "@/lib/models";
 import { DEFAULT_MODEL } from "@/lib/repo-system-prompt";
@@ -61,6 +62,7 @@ type ProviderSettings = {
   baseURL: string;
   apiKey: string;
   model: string;
+  systemPrompt: string;
 };
 
 const STORAGE_KEY = "ai-ide-template-settings-v2";
@@ -87,6 +89,7 @@ function loadSettings(): ProviderSettings {
       baseURL: "",
       apiKey: "",
       model: DEFAULT_MODEL,
+      systemPrompt: "",
     };
   }
 
@@ -97,6 +100,7 @@ function loadSettings(): ProviderSettings {
       baseURL: "",
       apiKey: "",
       model: DEFAULT_MODEL,
+      systemPrompt: "",
     };
   }
 
@@ -106,12 +110,14 @@ function loadSettings(): ProviderSettings {
       baseURL: parsed.baseURL ?? "",
       apiKey: parsed.apiKey ?? "",
       model: parsed.model ?? DEFAULT_MODEL,
+      systemPrompt: parsed.systemPrompt ?? "",
     };
   } catch {
     return {
       baseURL: "",
       apiKey: "",
       model: DEFAULT_MODEL,
+      systemPrompt: "",
     };
   }
 }
@@ -222,6 +228,7 @@ export function HomePageClient() {
         baseURL: settings.baseURL,
         apiKey: settings.apiKey,
         model: settings.model || DEFAULT_MODEL,
+        systemPrompt: settings.systemPrompt,
       },
     }),
   });
@@ -233,6 +240,7 @@ export function HomePageClient() {
       baseURL: draftSettings.baseURL.trim(),
       apiKey: draftSettings.apiKey.trim(),
       model: nextModel,
+      systemPrompt: draftSettings.systemPrompt,
     };
 
     setSettings(nextSettings);
@@ -469,6 +477,27 @@ export function HomePageClient() {
                   type="password"
                   value={draftSettings.apiKey}
                 />
+              </FieldContent>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="system-prompt">System prompt override</FieldLabel>
+              <FieldContent>
+                <Textarea
+                  className="min-h-36 font-mono text-sm"
+                  id="system-prompt"
+                  onChange={(event) => {
+                    setDraftSettings((prev) => ({
+                      ...prev,
+                      systemPrompt: event.target.value,
+                    }));
+                  }}
+                  placeholder="Leave blank to use the repository default system prompt."
+                  value={draftSettings.systemPrompt}
+                />
+                <FieldDescription>
+                  Leave blank to use the default system prompt from this repository.
+                </FieldDescription>
               </FieldContent>
             </Field>
           </FieldGroup>
