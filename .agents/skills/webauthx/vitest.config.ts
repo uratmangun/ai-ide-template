@@ -14,6 +14,14 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'unit',
+          include: ['src/**/*.test.ts'],
+          exclude: ['src/**/*.browser.test.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'browser',
           include: ['src/**/*.browser.test.ts'],
           setupFiles: ['test/authenticator.setup.ts'],
