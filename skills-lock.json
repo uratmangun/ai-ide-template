@@ -1,17 +1,17 @@
 {
   "version": 1,
   "skills": {
-    "agent-browser": {
-      "source": "vercel-labs/agent-browser",
-      "sourceType": "github",
-      "skillPath": "skills/agent-browser/SKILL.md",
-      "computedHash": "c19a532a3777698b80b35270939a1dc559da451381971b3e1e78174d1ab54863"
-    },
     "cloudflare": {
       "source": "cloudflare/skills",
       "sourceType": "github",
       "skillPath": "skills/cloudflare/SKILL.md",
       "computedHash": "ecc9c0211c605451f7e8b437724f84810fe013d5ca6c653c51d046139d4ecbf7"
+    },
+    "computer-use": {
+      "source": "stablyai/orca",
+      "sourceType": "github",
+      "skillPath": "skills/computer-use/SKILL.md",
+      "computedHash": "860bbe08128588fa609083136fddd991d6806e021655328043cf1afddd5e3187"
     },
     "gh-cli": {
       "source": "github/awesome-copilot",
@@ -29,7 +29,13 @@
       "source": "steipete/clawdis",
       "sourceType": "github",
       "skillPath": "skills/mcporter/SKILL.md",
-      "computedHash": "32822a4e496c5a2727a6e016ed3d79155f0775ded263de0c299faebcbba44215"
+      "computedHash": "ea5a58a5ab2f9b5927671cbabc7b4deb432e67e49faeb6a29d05ee9e1854b8c0"
+    },
+    "orca-cli": {
+      "source": "stablyai/orca",
+      "sourceType": "github",
+      "skillPath": "skills/orca-cli/SKILL.md",
+      "computedHash": "9223cd6820a9dbbf4132e8292b1ee4f8704e981b7746887a5ea3a14efacf05a6"
     },
     "react-devtools": {
       "source": "callstackincubator/agent-react-devtools",

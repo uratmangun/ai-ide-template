@@ -64,7 +64,6 @@ Embed a conservative mapping for currently known compatible skills:
 
 | Skill | Source | Source Type |
 |---|---|---|
-| `agent-browser` | `vercel-labs/agent-browser` | `github` |
 | `cloudflare` | `cloudflare/skills` | `github` |
 | `gh-cli` | `github/awesome-copilot` | `github` |
 | `hono` | `yusukebe/hono-skill` | `github` |
