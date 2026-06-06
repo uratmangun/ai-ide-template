@@ -11,7 +11,7 @@ import {
   Loader2Icon,
   Settings2Icon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import {
   Conversation,
@@ -21,14 +21,21 @@ import {
 } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import {
+  ModelSelector,
+  ModelSelectorContent,
+  ModelSelectorEmpty,
+  ModelSelectorGroup,
+  ModelSelectorInput,
+  ModelSelectorItem,
+  ModelSelectorList,
+  ModelSelectorLogo,
+  ModelSelectorName,
+} from "@/components/ai-elements/model-selector";
+import {
   PromptInput,
   PromptInputBody,
+  PromptInputButton,
   PromptInputFooter,
-  PromptInputSelect,
-  PromptInputSelectContent,
-  PromptInputSelectItem,
-  PromptInputSelectTrigger,
-  PromptInputSelectValue,
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputTools,
@@ -49,7 +56,12 @@ import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { useMountEffect } from "@/lib/hooks/use-mount-effect";
 import type { UiModel } from "@/lib/models";
+import {
+  type ProviderSettings,
+  useProviderSettings,
+} from "@/lib/provider-settings";
 import { DEFAULT_MODEL } from "@/lib/repo-system-prompt";
 
 type ModelApiResponse = {
@@ -58,24 +70,6 @@ type ModelApiResponse = {
   data: UiModel[];
 };
 
-type ProviderSettings = {
-  baseURL: string;
-  apiKey: string;
-  model: string;
-  systemPrompt: string;
-};
-
-const STORAGE_KEY = "ai-ide-template-settings-v2";
-
-const FALLBACK_MODELS: UiModel[] = [
-  {
-    id: DEFAULT_MODEL,
-    name: "Titan 5.4",
-    provider: "openai",
-    providerLabel: "OpenAI-compatible",
-  },
-];
-
 const suggestedPrompts = [
   "Give me a quick tour of this template and what I should customize first.",
   "How do I clone this template into a private repository with gh CLI?",
@@ -83,85 +77,54 @@ const suggestedPrompts = [
   "How do I deploy this Next.js app to my VPS with Podman and Cloudflare Tunnel?",
 ];
 
-function loadSettings(): ProviderSettings {
-  if (typeof window === "undefined") {
-    return {
-      baseURL: "",
-      apiKey: "",
-      model: DEFAULT_MODEL,
-      systemPrompt: "",
-    };
+function groupModelsByProvider(models: UiModel[]) {
+  const groups = new Map<string, UiModel[]>();
+
+  for (const model of models) {
+    const existing = groups.get(model.providerLabel) ?? [];
+    existing.push(model);
+    groups.set(model.providerLabel, existing);
   }
 
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-
-  if (!raw) {
-    return {
-      baseURL: "",
-      apiKey: "",
-      model: DEFAULT_MODEL,
-      systemPrompt: "",
-    };
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as Partial<ProviderSettings>;
-    return {
-      baseURL: parsed.baseURL ?? "",
-      apiKey: parsed.apiKey ?? "",
-      model: parsed.model ?? DEFAULT_MODEL,
-      systemPrompt: parsed.systemPrompt ?? "",
-    };
-  } catch {
-    return {
-      baseURL: "",
-      apiKey: "",
-      model: DEFAULT_MODEL,
-      systemPrompt: "",
-    };
-  }
+  return Array.from(groups.entries()).sort(([left], [right]) => left.localeCompare(right));
 }
 
-function getModelLabel(model: UiModel) {
-  return `${model.name} · ${model.providerLabel}`;
+function ModelsBootstrap({
+  settings,
+  onBootstrap,
+}: {
+  settings: ProviderSettings;
+  onBootstrap: (settings: ProviderSettings) => void | Promise<void>;
+}) {
+  useMountEffect(() => {
+    void onBootstrap(settings);
+  });
+
+  return null;
 }
 
 export function HomePageClient() {
-  const [settings, setSettings] = useState<ProviderSettings>(() => loadSettings());
-  const [draftSettings, setDraftSettings] = useState<ProviderSettings>(() => loadSettings());
+  const { settings, updateSettings } = useProviderSettings();
+  const [draftSettings, setDraftSettings] = useState<ProviderSettings>(settings);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [models, setModels] = useState<UiModel[]>(FALLBACK_MODELS);
+  const [models, setModels] = useState<UiModel[]>([]);
   const [modelsMessage, setModelsMessage] = useState<string | null>(null);
   const [modelsLoading, setModelsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [chatKey, setChatKey] = useState(0);
+  const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
+  const copyTimerRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  }, [settings]);
-
-  useEffect(() => {
-    if (!copied) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setCopied(false);
-    }, 1200);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [copied]);
+  const providerConfigured = settings.baseURL.trim().length > 0;
 
   const modelOptions = useMemo(() => {
     const map = new Map<string, UiModel>();
 
-    for (const model of [...models, ...FALLBACK_MODELS]) {
+    for (const model of models) {
       map.set(model.id, model);
     }
 
-    if (!map.has(settings.model)) {
+    if (settings.model && !map.has(settings.model)) {
       map.set(settings.model, {
         id: settings.model,
         name: settings.model,
@@ -170,55 +133,73 @@ export function HomePageClient() {
       });
     }
 
-    return Array.from(map.values());
+    return Array.from(map.values()).sort((left, right) => left.id.localeCompare(right.id));
   }, [models, settings.model]);
 
-  const loadModels = useCallback(async (nextSettings: ProviderSettings) => {
-    if (!nextSettings.baseURL.trim()) {
-      setModels(FALLBACK_MODELS);
-      setModelsMessage("Set an OpenAI-compatible URL in settings to load models.");
-      return;
-    }
+  const modelGroups = useMemo(() => groupModelsByProvider(modelOptions), [modelOptions]);
 
-    setModelsLoading(true);
+  const selectedModel = useMemo(
+    () => modelOptions.find((model) => model.id === settings.model),
+    [modelOptions, settings.model],
+  );
 
-    try {
-      const response = await fetch("/api/models", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          baseURL: nextSettings.baseURL,
-          apiKey: nextSettings.apiKey,
-        }),
-      });
+  const handleModelSelect = useCallback(
+    (modelId: string) => {
+      updateSettings((prev) => ({
+        ...prev,
+        model: modelId,
+      }));
+      setChatKey((current) => current + 1);
+      setModelSelectorOpen(false);
+    },
+    [updateSettings],
+  );
 
-      if (!response.ok) {
-        throw new Error(`Failed with status ${response.status}`);
+  const loadModels = useCallback(
+    async (nextSettings: ProviderSettings) => {
+      if (!nextSettings.baseURL.trim()) {
+        setModels([]);
+        setModelsMessage("Set an OpenAI-compatible URL in settings to load models.");
+        return;
       }
 
-      const payload = (await response.json()) as ModelApiResponse;
-      setModels(payload.data.length > 0 ? payload.data : FALLBACK_MODELS);
-      setModelsMessage(payload.message ?? null);
+      setModelsLoading(true);
 
-      if (payload.data.length > 0 && !payload.data.some((model) => model.id === nextSettings.model)) {
-        setSettings((prev) => ({
-          ...prev,
-          model: payload.data[0].id,
-        }));
+      try {
+        const response = await fetch("/api/models", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            baseURL: nextSettings.baseURL,
+            apiKey: nextSettings.apiKey,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed with status ${response.status}`);
+        }
+
+        const payload = (await response.json()) as ModelApiResponse;
+        setModels(payload.data);
+        setModelsMessage(payload.message ?? null);
+
+        if (payload.data.length > 0 && !payload.data.some((model) => model.id === nextSettings.model)) {
+          updateSettings((prev) => ({
+            ...prev,
+            model: payload.data[0]?.id ?? "",
+          }));
+        }
+      } catch {
+        setModels([]);
+        setModelsMessage("Could not load models from the configured API.");
+      } finally {
+        setModelsLoading(false);
       }
-    } catch {
-      setModels(FALLBACK_MODELS);
-      setModelsMessage("Could not load models from the configured API.");
-    } finally {
-      setModelsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadModels(settings);
-  }, [loadModels, settings]);
+    },
+    [updateSettings],
+  );
 
   const chat = useChat({
     id: `template-chat-${chatKey}`,
@@ -243,17 +224,24 @@ export function HomePageClient() {
       systemPrompt: draftSettings.systemPrompt,
     };
 
-    setSettings(nextSettings);
+    updateSettings(nextSettings);
     setSettingsOpen(false);
     setChatKey((value) => value + 1);
-    void loadModels(nextSettings);
-  }, [draftSettings, loadModels, settings.model]);
+  }, [draftSettings, settings.model, updateSettings]);
 
   const handleCopyCommand = useCallback(async () => {
     await navigator.clipboard.writeText(
       "gh repo create my-new-repo --template uratmangun/ai-ide-template --private --clone",
     );
     setCopied(true);
+
+    if (copyTimerRef.current) {
+      window.clearTimeout(copyTimerRef.current);
+    }
+
+    copyTimerRef.current = window.setTimeout(() => {
+      setCopied(false);
+    }, 1200);
   }, []);
 
   const handleSubmitPrompt = useCallback(
@@ -281,6 +269,12 @@ export function HomePageClient() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-4 px-4 py-5 md:px-8 md:py-8">
+      <ModelsBootstrap
+        key={`${settings.baseURL}|${settings.apiKey}`}
+        onBootstrap={loadModels}
+        settings={settings}
+      />
+
       <Card className="border-foreground/10 bg-card/80 shadow-lg backdrop-blur">
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -320,7 +314,7 @@ export function HomePageClient() {
             <div className="flex items-center gap-2">
               <BotIcon className="size-4 text-primary" />
               <CardTitle className="text-base">Repository assistant</CardTitle>
-              <Badge variant="outline">{settings.model || DEFAULT_MODEL}</Badge>
+              {settings.model ? <Badge variant="outline">{settings.model}</Badge> : null}
             </div>
             <Button
               onClick={() => {
@@ -372,11 +366,15 @@ export function HomePageClient() {
               {chat.messages.map((message) => (
                 <Message from={message.role} key={message.id}>
                   <MessageContent>
-                    {message.parts
-                      .filter((part) => part.type === "text")
-                      .map((part, index) => (
-                        <MessageResponse key={`${message.id}-text-${index}`}>{part.text}</MessageResponse>
-                      ))}
+                    {message.parts.flatMap((part) =>
+                      part.type === "text"
+                        ? [
+                            <MessageResponse key={`${message.id}-text-${part.text}`}>
+                              {part.text}
+                            </MessageResponse>,
+                          ]
+                        : [],
+                    )}
                   </MessageContent>
                 </Message>
               ))}
@@ -393,37 +391,40 @@ export function HomePageClient() {
               </PromptInputBody>
               <PromptInputFooter>
                 <PromptInputTools>
-                  <PromptInputSelect
+                  <PromptInputButton
+                    aria-expanded={modelSelectorOpen}
+                    aria-haspopup="dialog"
+                    className="min-w-48 max-w-full md:min-w-64"
                     disabled={modelsLoading}
-                    onValueChange={(value) => {
-                      if (value) {
-                        setSettings((prev) => ({
-                          ...prev,
-                          model: typeof value === "string" ? value : String(value),
-                        }));
-                        setChatKey((current) => current + 1);
+                    onClick={() => {
+                      if (!providerConfigured) {
+                        setDraftSettings(settings);
+                        setSettingsOpen(true);
+                        return;
                       }
+
+                      setModelSelectorOpen(true);
                     }}
-                    value={settings.model}
+                    type="button"
                   >
-                    <PromptInputSelectTrigger className="min-w-64 md:min-w-80">
-                      {modelsLoading ? (
-                        <span className="inline-flex items-center gap-2">
-                          <Loader2Icon className="size-3.5 animate-spin" />
-                          Loading models
-                        </span>
-                      ) : (
-                        <PromptInputSelectValue placeholder="Select model" />
-                      )}
-                    </PromptInputSelectTrigger>
-                    <PromptInputSelectContent>
-                      {modelOptions.map((model) => (
-                        <PromptInputSelectItem key={model.id} value={model.id}>
-                          {getModelLabel(model)}
-                        </PromptInputSelectItem>
-                      ))}
-                    </PromptInputSelectContent>
-                  </PromptInputSelect>
+                    {modelsLoading ? (
+                      <>
+                        <Loader2Icon className="size-3.5 animate-spin" />
+                        <ModelSelectorName>Loading models</ModelSelectorName>
+                      </>
+                    ) : !providerConfigured ? (
+                      <ModelSelectorName>Select model</ModelSelectorName>
+                    ) : (
+                      <>
+                        {selectedModel ? (
+                          <ModelSelectorLogo provider={selectedModel.provider} />
+                        ) : null}
+                        <ModelSelectorName>
+                          {selectedModel?.id ?? (settings.model || "Select model")}
+                        </ModelSelectorName>
+                      </>
+                    )}
+                  </PromptInputButton>
                 </PromptInputTools>
                 <PromptInputSubmit onStop={() => chat.stop()} status={chat.status} />
               </PromptInputFooter>
@@ -431,6 +432,36 @@ export function HomePageClient() {
           </div>
         </CardContent>
       </Card>
+
+      <ModelSelector onOpenChange={setModelSelectorOpen} open={modelSelectorOpen}>
+        <ModelSelectorContent title="Select model">
+          <ModelSelectorInput placeholder="Search models..." />
+          <ModelSelectorList>
+            <ModelSelectorEmpty>No models found.</ModelSelectorEmpty>
+            {modelGroups.map(([providerLabel, providerModels]) => (
+              <ModelSelectorGroup heading={providerLabel} key={providerLabel}>
+                {providerModels.map((model) => (
+                  <ModelSelectorItem
+                    key={model.id}
+                    onSelect={() => {
+                      handleModelSelect(model.id);
+                    }}
+                    value={model.id}
+                  >
+                    <ModelSelectorLogo provider={model.provider} />
+                    <ModelSelectorName>{model.id}</ModelSelectorName>
+                    {settings.model === model.id ? (
+                      <CheckIcon className="ml-auto size-4" />
+                    ) : (
+                      <span className="ml-auto size-4" />
+                    )}
+                  </ModelSelectorItem>
+                ))}
+              </ModelSelectorGroup>
+            ))}
+          </ModelSelectorList>
+        </ModelSelectorContent>
+      </ModelSelector>
 
       <Dialog onOpenChange={setSettingsOpen} open={settingsOpen}>
         <DialogContent className="sm:max-w-lg">

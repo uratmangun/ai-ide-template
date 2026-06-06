@@ -19,6 +19,11 @@ Instructions:
 When creating UI components, styling, or choosing color palettes:
 @.opencode/rules/ui-color-prefer-non-purple-primary.mdc
 
+### React Components
+
+When writing or refactoring React components, adding `useEffect`, or reviewing effect-based logic:
+@.opencode/rules/no-use-effect.mdc
+
 ### Commit Messages
 
 When writing commit messages:

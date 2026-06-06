@@ -68,11 +68,12 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { useLiveRef } from "@/lib/hooks/use-live-ref";
+import { useMountEffect } from "@/lib/hooks/use-mount-effect";
 
 
 const convertBlobUrlToDataUrl = async (url: string): Promise<string | null> => {
@@ -244,6 +245,7 @@ export const PromptInputProvider = ({
   >([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const openRef = useRef<() => void>(() => {});
+  const trackedBlobUrlsRef = useRef<Set<string>>(new Set());
 
   const add = useCallback((files: File[] | FileList) => {
     const incoming = [...files];
@@ -253,13 +255,18 @@ export const PromptInputProvider = ({
 
     setAttachmentFiles((prev) => [
       ...prev,
-      ...incoming.map((file) => ({
-        filename: file.name,
-        id: nanoid(),
-        mediaType: file.type,
-        type: "file" as const,
-        url: URL.createObjectURL(file),
-      })),
+      ...incoming.map((file) => {
+        const url = URL.createObjectURL(file);
+        trackedBlobUrlsRef.current.add(url);
+
+        return {
+          filename: file.name,
+          id: nanoid(),
+          mediaType: file.type,
+          type: "file" as const,
+          url,
+        };
+      }),
     ]);
   }, []);
 
@@ -267,6 +274,7 @@ export const PromptInputProvider = ({
     setAttachmentFiles((prev) => {
       const found = prev.find((f) => f.id === id);
       if (found?.url) {
+        trackedBlobUrlsRef.current.delete(found.url);
         URL.revokeObjectURL(found.url);
       }
       return prev.filter((f) => f.id !== id);
@@ -277,6 +285,7 @@ export const PromptInputProvider = ({
     setAttachmentFiles((prev) => {
       for (const f of prev) {
         if (f.url) {
+          trackedBlobUrlsRef.current.delete(f.url);
           URL.revokeObjectURL(f.url);
         }
       }
@@ -284,21 +293,13 @@ export const PromptInputProvider = ({
     });
   }, []);
 
-  const attachmentsRef = useRef(attachmentFiles);
-
-  useEffect(() => {
-    attachmentsRef.current = attachmentFiles;
-  }, [attachmentFiles]);
-
-  useEffect(
+  useMountEffect(
     () => () => {
-      for (const f of attachmentsRef.current) {
-        if (f.url) {
-          URL.revokeObjectURL(f.url);
-        }
+      for (const url of trackedBlobUrlsRef.current) {
+        URL.revokeObjectURL(url);
       }
+      trackedBlobUrlsRef.current.clear();
     },
-    []
   );
 
   const openFileDialog = useCallback(() => {
@@ -511,11 +512,13 @@ export const PromptInput = ({
     (SourceDocumentUIPart & { id: string })[]
   >([]);
 
-  const filesRef = useRef(files);
+  const trackedBlobUrlsRef = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    filesRef.current = files;
-  }, [files]);
+  const clearFileInputValue = useCallback(() => {
+    if (syncHiddenInput && inputRef.current) {
+      inputRef.current.value = "";
+    }
+  }, [syncHiddenInput]);
 
   const openFileDialogLocal = useCallback(() => {
     inputRef.current?.click();
@@ -527,10 +530,10 @@ export const PromptInput = ({
         return true;
       }
 
-      const patterns = accept
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const patterns = accept.split(",").flatMap((s) => {
+        const trimmed = s.trim();
+        return trimmed ? [trimmed] : [];
+      });
 
       return patterns.some((pattern) => {
         if (pattern.endsWith("/*")) {
@@ -580,12 +583,14 @@ export const PromptInput = ({
         }
         const next: (FileUIPart & { id: string })[] = [];
         for (const file of capped) {
+          const url = URL.createObjectURL(file);
+          trackedBlobUrlsRef.current.add(url);
           next.push({
             filename: file.name,
             id: nanoid(),
             mediaType: file.type,
             type: "file",
-            url: URL.createObjectURL(file),
+            url,
           });
         }
         return [...prev, ...next];
@@ -595,15 +600,25 @@ export const PromptInput = ({
   );
 
   const removeLocal = useCallback(
-    (id: string) =>
+    (id: string) => {
+      let shouldClearInput = false;
+
       setItems((prev) => {
         const found = prev.find((file) => file.id === id);
         if (found?.url) {
+          trackedBlobUrlsRef.current.delete(found.url);
           URL.revokeObjectURL(found.url);
         }
-        return prev.filter((file) => file.id !== id);
-      }),
-    []
+        const next = prev.filter((file) => file.id !== id);
+        shouldClearInput = next.length === 0;
+        return next;
+      });
+
+      if (shouldClearInput) {
+        clearFileInputValue();
+      }
+    },
+    [clearFileInputValue],
   );
 
   const addWithProviderValidation = useCallback(
@@ -649,20 +664,23 @@ export const PromptInput = ({
     [matchesAccept, maxFileSize, maxFiles, onError, files.length, controller]
   );
 
-  const clearAttachments = useCallback(
-    () =>
-      usingProvider
-        ? controller?.attachments.clear()
-        : setItems((prev) => {
-            for (const file of prev) {
-              if (file.url) {
-                URL.revokeObjectURL(file.url);
-              }
-            }
-            return [];
-          }),
-    [usingProvider, controller]
-  );
+  const clearAttachments = useCallback(() => {
+    if (usingProvider) {
+      controller?.attachments.clear();
+      return;
+    }
+
+    setItems((prev) => {
+      for (const file of prev) {
+        if (file.url) {
+          trackedBlobUrlsRef.current.delete(file.url);
+          URL.revokeObjectURL(file.url);
+        }
+      }
+      return [];
+    });
+    clearFileInputValue();
+  }, [usingProvider, controller, clearFileInputValue]);
 
   const clearReferencedSources = useCallback(
     () => setReferencedSources([]),
@@ -680,86 +698,67 @@ export const PromptInput = ({
     clearReferencedSources();
   }, [clearAttachments, clearReferencedSources]);
 
-  useEffect(() => {
-    if (!usingProvider) {
-      return;
-    }
-    controller.__registerFileInput(inputRef, () => inputRef.current?.click());
-  }, [usingProvider, controller]);
+  const addRef = useLiveRef(add);
+  const globalDropRef = useLiveRef(globalDrop);
+  const usingProviderRef = useLiveRef(usingProvider);
+  const controllerRef = useLiveRef(controller);
 
-  useEffect(() => {
-    if (syncHiddenInput && inputRef.current && files.length === 0) {
-      inputRef.current.value = "";
+  useMountEffect(() => {
+    if (usingProviderRef.current && controllerRef.current) {
+      controllerRef.current.__registerFileInput(inputRef, () => inputRef.current?.click());
     }
-  }, [files, syncHiddenInput]);
+  });
 
-  useEffect(() => {
+  useMountEffect(() => {
+    const onDragOver = (event: DragEvent) => {
+      if (event.dataTransfer?.types?.includes("Files")) {
+        event.preventDefault();
+      }
+    };
+
+    const onDrop = (event: DragEvent) => {
+      if (event.dataTransfer?.types?.includes("Files")) {
+        event.preventDefault();
+      }
+
+      if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+        addRef.current(event.dataTransfer.files);
+      }
+    };
+
+    if (globalDropRef.current) {
+      document.addEventListener("dragover", onDragOver);
+      document.addEventListener("drop", onDrop);
+
+      return () => {
+        document.removeEventListener("dragover", onDragOver);
+        document.removeEventListener("drop", onDrop);
+      };
+    }
+
     const form = formRef.current;
     if (!form) {
       return;
     }
-    if (globalDrop) {
-      return;
-    }
 
-    const onDragOver = (e: DragEvent) => {
-      if (e.dataTransfer?.types?.includes("Files")) {
-        e.preventDefault();
-      }
-    };
-    const onDrop = (e: DragEvent) => {
-      if (e.dataTransfer?.types?.includes("Files")) {
-        e.preventDefault();
-      }
-      if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-        add(e.dataTransfer.files);
-      }
-    };
     form.addEventListener("dragover", onDragOver);
     form.addEventListener("drop", onDrop);
+
     return () => {
       form.removeEventListener("dragover", onDragOver);
       form.removeEventListener("drop", onDrop);
     };
-  }, [add, globalDrop]);
+  });
 
-  useEffect(() => {
-    if (!globalDrop) {
-      return;
-    }
-
-    const onDragOver = (e: DragEvent) => {
-      if (e.dataTransfer?.types?.includes("Files")) {
-        e.preventDefault();
-      }
-    };
-    const onDrop = (e: DragEvent) => {
-      if (e.dataTransfer?.types?.includes("Files")) {
-        e.preventDefault();
-      }
-      if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-        add(e.dataTransfer.files);
-      }
-    };
-    document.addEventListener("dragover", onDragOver);
-    document.addEventListener("drop", onDrop);
-    return () => {
-      document.removeEventListener("dragover", onDragOver);
-      document.removeEventListener("drop", onDrop);
-    };
-  }, [add, globalDrop]);
-
-  useEffect(
+  useMountEffect(
     () => () => {
-      if (!usingProvider) {
-        for (const f of filesRef.current) {
-          if (f.url) {
-            URL.revokeObjectURL(f.url);
-          }
+      if (!usingProviderRef.current) {
+        for (const url of trackedBlobUrlsRef.current) {
+          URL.revokeObjectURL(url);
         }
+        trackedBlobUrlsRef.current.clear();
       }
     },
-    [usingProvider]
   );
 
   const handleChange: ChangeEventHandler<HTMLInputElement> = useCallback(
@@ -914,7 +913,7 @@ export const PromptInputTextarea = ({
 }: PromptInputTextareaProps) => {
   const controller = useOptionalPromptInputController();
   const attachments = usePromptInputAttachments();
-  const [isComposing, setIsComposing] = useState(false);
+  const isComposingRef = useRef(false);
 
   const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = useCallback(
     (e) => {
@@ -925,7 +924,7 @@ export const PromptInputTextarea = ({
       }
 
       if (e.key === "Enter") {
-        if (isComposing || e.nativeEvent.isComposing) {
+        if (isComposingRef.current || e.nativeEvent.isComposing) {
           return;
         }
         if (e.shiftKey) {
@@ -956,7 +955,7 @@ export const PromptInputTextarea = ({
         }
       }
     },
-    [onKeyDown, isComposing, attachments]
+    [onKeyDown, attachments]
   );
 
   const handlePaste: ClipboardEventHandler<HTMLTextAreaElement> = useCallback(
@@ -986,8 +985,12 @@ export const PromptInputTextarea = ({
     [attachments]
   );
 
-  const handleCompositionEnd = useCallback(() => setIsComposing(false), []);
-  const handleCompositionStart = useCallback(() => setIsComposing(true), []);
+  const handleCompositionEnd = useCallback(() => {
+    isComposingRef.current = false;
+  }, []);
+  const handleCompositionStart = useCallback(() => {
+    isComposingRef.current = true;
+  }, []);
 
   const controlledProps = controller
     ? {
@@ -1304,15 +1307,18 @@ export type PromptInputTabLabelProps = HTMLAttributes<HTMLHeadingElement>;
 
 export const PromptInputTabLabel = ({
   className,
+  children,
   ...props
 }: PromptInputTabLabelProps) => (
-  <h3
+  <div
     className={cn(
       "mb-2 px-3 font-medium text-muted-foreground text-xs",
       className
     )}
     {...props}
-  />
+  >
+    {children}
+  </div>
 );
 
 export type PromptInputTabBodyProps = HTMLAttributes<HTMLDivElement>;

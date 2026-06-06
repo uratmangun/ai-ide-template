@@ -14,67 +14,73 @@ export type UiModel = {
   providerLabel: string;
 };
 
-function toTitleCase(value: string) {
-  return value
-    .split(/[-_\s]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+function inferProviderLogo(modelId: string, ownedBy?: string) {
+  const owner = ownedBy?.toLowerCase() ?? "";
+  const id = modelId.toLowerCase();
+
+  if (owner.includes("openai") || id.startsWith("gpt-") || id.startsWith("o1") || id.startsWith("codex-")) {
+    return "openai";
+  }
+
+  if (owner.includes("anthropic") || id.includes("claude")) {
+    return "anthropic";
+  }
+
+  if (owner.includes("google") || id.includes("gemini")) {
+    return "google";
+  }
+
+  if (owner.includes("kilo") || owner.includes("openrouter") || id.startsWith("kilo-") || id.startsWith("openrouter/")) {
+    return "openrouter";
+  }
+
+  if (id.includes("qwen")) {
+    return "alibaba";
+  }
+
+  if (id.includes("llama")) {
+    return "llama";
+  }
+
+  if (id.includes("mistral")) {
+    return "mistral";
+  }
+
+  if (id.includes("deepseek")) {
+    return "deepseek";
+  }
+
+  if (id.includes("grok")) {
+    return "xai";
+  }
+
+  return "openai";
 }
 
-function inferProvider(modelId: string) {
-  const normalized = modelId.toLowerCase();
-
-  if (normalized.includes("gemini")) {
-    return { provider: "google", providerLabel: "Google" };
+function inferProviderLabel(modelId: string, ownedBy?: string) {
+  if (ownedBy?.trim()) {
+    return ownedBy.trim();
   }
 
-  if (normalized.includes("qwen")) {
-    return { provider: "alibaba", providerLabel: "Alibaba" };
+  const id = modelId.toLowerCase();
+
+  if (id.startsWith("kilo-") || id.startsWith("openrouter/")) {
+    return "OpenRouter";
   }
 
-  if (normalized.includes("claude")) {
-    return { provider: "anthropic", providerLabel: "Anthropic" };
+  if (id.includes("gemini")) {
+    return "Google";
   }
 
-  if (normalized.includes("llama")) {
-    return { provider: "llama", providerLabel: "Llama" };
+  if (id.includes("claude")) {
+    return "Anthropic";
   }
 
-  if (normalized.includes("mistral")) {
-    return { provider: "mistral", providerLabel: "Mistral" };
+  if (id.includes("qwen")) {
+    return "Alibaba";
   }
 
-  if (normalized.includes("deepseek")) {
-    return { provider: "deepseek", providerLabel: "DeepSeek" };
-  }
-
-  if (normalized.includes("grok")) {
-    return { provider: "xai", providerLabel: "xAI" };
-  }
-
-  return { provider: "openai", providerLabel: "OpenAI-compatible" };
-}
-
-function humanizeModelName(modelId: string) {
-  return (
-    modelId
-      .split(/[/:]/)
-      .pop()
-      ?.split("-")
-      .map((part) => {
-        if (/^\d+(?:\.\d+)?$/.test(part)) {
-          return part;
-        }
-
-        if (part.length <= 3) {
-          return part.toUpperCase();
-        }
-
-        return part.charAt(0).toUpperCase() + part.slice(1);
-      })
-      .join(" ") || modelId
-  );
+  return "OpenAI-compatible";
 }
 
 export function normalizeModel(model: ProxyModel): UiModel | null {
@@ -85,12 +91,11 @@ export function normalizeModel(model: ProxyModel): UiModel | null {
   }
 
   const owner = model.owned_by?.trim();
-  const inferred = inferProvider(id);
 
   return {
     id,
-    name: humanizeModelName(id),
-    provider: inferred.provider,
-    providerLabel: owner ? toTitleCase(owner) : inferred.providerLabel,
+    name: id,
+    provider: inferProviderLogo(id, owner),
+    providerLabel: inferProviderLabel(id, owner),
   };
 }

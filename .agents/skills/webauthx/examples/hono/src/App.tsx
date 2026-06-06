@@ -1,5 +1,5 @@
 import { hc } from 'hono/client'
-import { startTransition, useEffect, useEffectEvent, useState } from 'react'
+import { startTransition, useCallback, useEffect, useState } from 'react'
 import { Authentication, Registration } from 'webauthx/client'
 
 import type { AppType } from './worker/index.ts'
@@ -207,7 +207,7 @@ function useSession() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [session, setSession] = useState<Session | null>(null)
 
-  const refresh = useEffectEvent(async () => {
+  const refresh = useCallback(async () => {
     setIsRefreshing(true)
 
     try {
@@ -225,11 +225,11 @@ function useSession() {
     } finally {
       setIsRefreshing(false)
     }
-  })
+  }, [])
 
   useEffect(() => {
     void refresh()
-  }, [])
+  }, [refresh])
 
   return {
     isRefreshing,
