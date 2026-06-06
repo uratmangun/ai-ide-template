@@ -55,7 +55,6 @@ import {
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
 import { useMountEffect } from "@/lib/hooks/use-mount-effect";
 import type { UiModel } from "@/lib/models";
 import {
@@ -76,6 +75,9 @@ const suggestedPrompts = [
   "Show me where to change the system prompt and deployment hostname.",
   "How do I deploy this Next.js app to my VPS with Podman and Cloudflare Tunnel?",
 ];
+
+const SUGGESTED_PROMPT_BUTTON_CLASS =
+  "h-auto justify-start whitespace-normal rounded-lg border-[#e2e8f0] bg-[#f8fafc] px-3.5 py-3 text-left text-[13px] font-normal text-[#334155] transition-colors hover:border-black hover:bg-white hover:text-black";
 
 function groupModelsByProvider(models: UiModel[]) {
   const groups = new Map<string, UiModel[]>();
@@ -337,55 +339,60 @@ export function HomePageClient() {
           ) : null}
         </CardHeader>
 
-        <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-0">
-          <Conversation>
-            <ConversationContent>
-              {chat.messages.length === 0 ? (
-                <ConversationEmptyState
-                  title="Ask about customizing this template"
-                  description="Try one of the prompts below or write your own deployment question."
-                  icon={<BotIcon className="size-5" />}
-                >
-                  <div className="grid w-full max-w-3xl gap-2 md:grid-cols-2">
-                    {suggestedPrompts.map((prompt) => (
-                      <Button
-                        className="h-auto justify-start whitespace-normal text-left"
-                        key={prompt}
-                        onClick={() => {
-                          void handleSubmitPrompt({ text: prompt });
-                        }}
-                        variant="outline"
-                      >
-                        {prompt}
-                      </Button>
-                    ))}
-                  </div>
-                </ConversationEmptyState>
-              ) : null}
+        <CardContent className="flex min-h-0 flex-1 flex-col p-0">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div
+              className="relative h-[calc(100dvh-11rem)] min-h-[36rem] w-full shrink-0 overflow-hidden"
+              data-testid="chat-conversation-shell"
+            >
+              <Conversation className="absolute inset-0 size-full">
+                <ConversationContent className="gap-6">
+                  {chat.messages.length === 0 ? (
+                    <ConversationEmptyState
+                      title="Ask about customizing this template"
+                      description="Try one of the prompts below or write your own deployment question."
+                      icon={<BotIcon className="size-5" />}
+                    >
+                      <div className="flex w-full max-w-lg flex-col gap-2">
+                        {suggestedPrompts.map((prompt) => (
+                          <Button
+                            key={prompt}
+                            type="button"
+                            variant="outline"
+                            className={SUGGESTED_PROMPT_BUTTON_CLASS}
+                            onClick={() => {
+                              void handleSubmitPrompt({ text: prompt });
+                            }}
+                          >
+                            {prompt}
+                          </Button>
+                        ))}
+                      </div>
+                    </ConversationEmptyState>
+                  ) : null}
 
-              {chat.messages.map((message) => (
-                <Message from={message.role} key={message.id}>
-                  <MessageContent>
-                    {message.parts.flatMap((part) =>
-                      part.type === "text"
-                        ? [
-                            <MessageResponse key={`${message.id}-text-${part.text}`}>
-                              {part.text}
-                            </MessageResponse>,
-                          ]
-                        : [],
-                    )}
-                  </MessageContent>
-                </Message>
-              ))}
-            </ConversationContent>
-            <ConversationScrollButton />
-          </Conversation>
+                  {chat.messages.map((message) => (
+                    <Message from={message.role} key={message.id}>
+                      <MessageContent>
+                        {message.parts.flatMap((part) =>
+                          part.type === "text"
+                            ? [
+                                <MessageResponse key={`${message.id}-text-${part.text}`}>
+                                  {part.text}
+                                </MessageResponse>,
+                              ]
+                            : [],
+                        )}
+                      </MessageContent>
+                    </Message>
+                  ))}
+                </ConversationContent>
+                <ConversationScrollButton />
+              </Conversation>
+            </div>
 
-          <Separator />
-
-          <div className="p-3 pt-0 md:p-4 md:pt-0">
-            <PromptInput onSubmit={handleSubmitPrompt}>
+            <div className="shrink-0 border-t border-border/60 p-3 md:p-4">
+            <PromptInput className="w-full" onSubmit={handleSubmitPrompt}>
               <PromptInputBody>
                 <PromptInputTextarea disabled={isSending} placeholder="Ask about this template, deployment, or customization…" />
               </PromptInputBody>
@@ -429,6 +436,7 @@ export function HomePageClient() {
                 <PromptInputSubmit onStop={() => chat.stop()} status={chat.status} />
               </PromptInputFooter>
             </PromptInput>
+            </div>
           </div>
         </CardContent>
       </Card>
