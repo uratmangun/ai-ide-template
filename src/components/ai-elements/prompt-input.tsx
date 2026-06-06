@@ -1160,6 +1160,8 @@ type PromptInputButtonClickEvent = Parameters<
 export type PromptInputSubmitProps = ComponentProps<typeof InputGroupButton> & {
   status?: ChatStatus;
   onStop?: () => void;
+  /** Called when status is `error` (e.g. dismiss and restore the prompt). */
+  onErrorDismiss?: () => void;
 };
 
 export const PromptInputSubmit = ({
@@ -1168,11 +1170,13 @@ export const PromptInputSubmit = ({
   size = "icon-sm",
   status,
   onStop,
+  onErrorDismiss,
   onClick,
   children,
   ...props
 }: PromptInputSubmitProps) => {
   const isGenerating = status === "submitted" || status === "streaming";
+  const isError = status === "error";
 
   let Icon = <CornerDownLeftIcon className="size-4" />;
 
@@ -1191,18 +1195,28 @@ export const PromptInputSubmit = ({
         onStop();
         return;
       }
+      if (isError && onErrorDismiss) {
+        event.preventDefault();
+        onErrorDismiss();
+        return;
+      }
       onClick?.(event);
     },
-    [isGenerating, onStop, onClick]
+    [isGenerating, isError, onStop, onErrorDismiss, onClick],
   );
+
+  const actionType =
+    (isGenerating && onStop) || (isError && onErrorDismiss) ? "button" : "submit";
 
   return (
     <InputGroupButton
-      aria-label={isGenerating ? "Stop" : "Submit"}
+      aria-label={
+        isGenerating ? "Stop" : isError ? "Dismiss error" : "Submit"
+      }
       className={cn(className)}
       onClick={handleClick}
       size={size}
-      type={isGenerating && onStop ? "button" : "submit"}
+      type={actionType}
       variant={variant}
       {...props}
     >

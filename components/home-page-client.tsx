@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { buildChatRequestBody } from "@/lib/chat-request";
+
 import {
   Conversation,
   ConversationContent,
@@ -56,6 +58,7 @@ import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useMountEffect } from "@/lib/hooks/use-mount-effect";
+import { cn } from "@/lib/utils";
 import type { UiModel } from "@/lib/models";
 import {
   type ProviderSettings,
@@ -203,17 +206,12 @@ export function HomePageClient() {
     [updateSettings],
   );
 
+  // Transport body is fixed at first useChat render; pass dynamic settings per sendMessage.
+  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
+
   const chat = useChat({
     id: `template-chat-${chatKey}`,
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      body: {
-        baseURL: settings.baseURL,
-        apiKey: settings.apiKey,
-        model: settings.model || DEFAULT_MODEL,
-        systemPrompt: settings.systemPrompt,
-      },
-    }),
+    transport,
   });
 
   const handleSaveSettings = useCallback(() => {
@@ -246,25 +244,45 @@ export function HomePageClient() {
     }, 1200);
   }, []);
 
+  const handleStopChat = useCallback(() => {
+    void chat.stop();
+  }, [chat]);
+
+  const handleDismissError = useCallback(() => {
+    chat.clearError();
+  }, [chat]);
+
   const handleSubmitPrompt = useCallback(
     ({ text }: { text: string }) => {
-      const content = text.trim();
-
-      if (!content || chat.status === "submitted" || chat.status === "streaming") {
+      if (chat.status === "submitted" || chat.status === "streaming") {
+        handleStopChat();
         return;
       }
 
-      void chat.sendMessage({
-        role: "user",
-        parts: [
-          {
-            type: "text",
-            text: content,
-          },
-        ],
-      });
+      const content = text.trim();
+
+      if (!content) {
+        return;
+      }
+
+      if (chat.status === "error") {
+        handleDismissError();
+      }
+
+      void chat.sendMessage(
+        {
+          role: "user",
+          parts: [
+            {
+              type: "text",
+              text: content,
+            },
+          ],
+        },
+        { body: buildChatRequestBody(settings) },
+      );
     },
-    [chat],
+    [chat, settings, handleStopChat, handleDismissError],
   );
 
   const isSending = chat.status === "submitted" || chat.status === "streaming";
@@ -433,7 +451,17 @@ export function HomePageClient() {
                     )}
                   </PromptInputButton>
                 </PromptInputTools>
-                <PromptInputSubmit onStop={() => chat.stop()} status={chat.status} />
+                <PromptInputSubmit
+                  className={cn(
+                    isSending &&
+                      "bg-destructive text-white hover:bg-destructive/90 hover:text-white [&_svg]:text-white",
+                    chat.status === "error" &&
+                      "bg-destructive/90 text-white hover:bg-destructive hover:text-white [&_svg]:text-white",
+                  )}
+                  onErrorDismiss={handleDismissError}
+                  onStop={handleStopChat}
+                  status={chat.status}
+                />
               </PromptInputFooter>
             </PromptInput>
             </div>

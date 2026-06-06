@@ -67,6 +67,7 @@ export async function POST(request: Request) {
     model: provider.chatModel(model || DEFAULT_MODEL),
     system: resolvedSystemPrompt,
     messages: modelMessages,
+    abortSignal: request.signal,
   });
 
   return result.toUIMessageStreamResponse({
