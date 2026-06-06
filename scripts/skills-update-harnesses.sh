@@ -29,12 +29,45 @@ fi
 # .cursor/skills and .windsurf/skills should be symlinks to .agents/skills.
 # .opencode/skills is kept as a directory; run 'npx skills add -a opencode'
 # to let the CLI manage its symlink, or keep it separate.
-HARNESS_AGENTS=(cursor opencode)
+HARNESS_AGENTS=(cursor opencode windsurf)
 
 AG_ARGS=()
 for a in "${HARNESS_AGENTS[@]}"; do
   AG_ARGS+=(-a "$a")
 done
+
+ensure_harness_symlinks() {
+  local agents_dir="${ROOT}/.agents/skills"
+  local link
+
+  if [[ ! -d "$agents_dir" ]]; then
+    echo ">> WARNING: missing $agents_dir — skipping harness symlink repair" >&2
+    return 0
+  fi
+
+  for link in .cursor/skills .windsurf/skills; do
+    local target="${ROOT}/${link}"
+    local parent
+    parent="$(dirname "$target")"
+
+    if [[ ! -d "$parent" ]]; then
+      echo ">> WARNING: missing $parent — skipping $link" >&2
+      continue
+    fi
+
+    if [[ -L "$target" ]]; then
+      continue
+    fi
+
+    if [[ -e "$target" ]]; then
+      echo ">> WARNING: $link exists but is not a symlink — leaving it unchanged" >&2
+      continue
+    fi
+
+    ln -s ../.agents/skills "$target"
+    echo ">> linked $link -> ../.agents/skills"
+  done
+}
 
 echo ">> syncing from skills-lock.json → agents: ${HARNESS_AGENTS[*]}"
 
@@ -59,5 +92,7 @@ while read -r line; do
     echo ">> WARNING: failed to install from $src — continuing with next source" >&2
   fi
 done < <(jq -c '.skills | to_entries | group_by([.value.source, .value.sourceType])[] | {source: .[0].value.source, sourceType: .[0].value.sourceType, skills: [.[].key]}' "$LOCK")
+
+ensure_harness_symlinks
 
 echo ">> done"
