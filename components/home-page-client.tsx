@@ -72,6 +72,21 @@ type ModelApiResponse = {
   data: UiModel[];
 };
 
+const DEFAULT_REPO_NAME = "my-new-repo";
+
+function formatRepoSlug(name: string) {
+  const trimmed = name.trim();
+  return trimmed || DEFAULT_REPO_NAME;
+}
+
+function buildGhCloneCommand(repoName: string) {
+  return `gh repo create ${formatRepoSlug(repoName)} --template uratmangun/ai-ide-template --private --clone`;
+}
+
+function buildHfSpaceCommand(repoName: string) {
+  return `hf repos create ${formatRepoSlug(repoName)} --repo-type space --space-sdk gradio --private`;
+}
+
 const suggestedPrompts = [
   "Give me a quick tour of this template and what I should customize first.",
   "How do I clone this template into a private repository with gh CLI?",
@@ -115,7 +130,8 @@ export function HomePageClient() {
   const [models, setModels] = useState<UiModel[]>([]);
   const [modelsMessage, setModelsMessage] = useState<string | null>(null);
   const [modelsLoading, setModelsLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [repoName, setRepoName] = useState(DEFAULT_REPO_NAME);
+  const [copiedCommand, setCopiedCommand] = useState<"gh" | "hf" | null>(null);
   const [chatKey, setChatKey] = useState(0);
   const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
   const copyTimerRef = useRef<number | null>(null);
@@ -229,18 +245,19 @@ export function HomePageClient() {
     setChatKey((value) => value + 1);
   }, [draftSettings, settings.model, updateSettings]);
 
-  const handleCopyCommand = useCallback(async () => {
-    await navigator.clipboard.writeText(
-      "gh repo create my-new-repo --template uratmangun/ai-ide-template --private --clone",
-    );
-    setCopied(true);
+  const ghCloneCommand = useMemo(() => buildGhCloneCommand(repoName), [repoName]);
+  const hfSpaceCommand = useMemo(() => buildHfSpaceCommand(repoName), [repoName]);
+
+  const handleCopyCommand = useCallback(async (command: string, target: "gh" | "hf") => {
+    await navigator.clipboard.writeText(command);
+    setCopiedCommand(target);
 
     if (copyTimerRef.current) {
       window.clearTimeout(copyTimerRef.current);
     }
 
     copyTimerRef.current = window.setTimeout(() => {
-      setCopied(false);
+      setCopiedCommand(null);
     }, 1200);
   }, []);
 
@@ -305,36 +322,80 @@ export function HomePageClient() {
                 Clone fast with GitHub CLI, then run this chat shell against any OpenAI-compatible endpoint.
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Button onClick={handleCopyCommand} variant="outline">
-                {copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
-                {copied ? "Copied" : "Copy clone command"}
-              </Button>
+            <Button
+              onClick={() => {
+                window.open("https://github.com/uratmangun/ai-ide-template", "_blank", "noopener,noreferrer");
+              }}
+            >
+              <ExternalLinkIcon className="size-4" />
+              Open repo
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4 pt-0">
+          <Field>
+            <FieldLabel htmlFor="repo-name">Repository name</FieldLabel>
+            <Input
+              id="repo-name"
+              value={repoName}
+              onChange={(event) => setRepoName(event.target.value)}
+              placeholder={DEFAULT_REPO_NAME}
+              spellCheck={false}
+              autoComplete="off"
+            />
+          </Field>
+
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">GitHub CLI</p>
+            <div className="flex items-start gap-2">
+              <code className="block min-w-0 flex-1 rounded-md border border-foreground/10 bg-background/60 px-3 py-2 font-mono text-xs text-foreground/90 md:text-sm">
+                {ghCloneCommand}
+              </code>
               <Button
-                onClick={() => {
-                  window.open("https://github.com/uratmangun/ai-ide-template", "_blank", "noopener,noreferrer");
-                }}
+                type="button"
+                onClick={() => void handleCopyCommand(ghCloneCommand, "gh")}
+                variant="outline"
+                size="icon-sm"
+                className="shrink-0"
+                aria-label={copiedCommand === "gh" ? "Copied" : "Copy GitHub clone command"}
               >
-                <ExternalLinkIcon className="size-4" />
-                Open repo
+                {copiedCommand === "gh" ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
               </Button>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <code className="block rounded-md border border-foreground/10 bg-background/60 px-3 py-2 font-mono text-xs text-foreground/90 md:text-sm">
-            gh repo create my-new-repo --template uratmangun/ai-ide-template --private --clone
-          </code>
+
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">Hugging Face CLI</p>
+            <div className="flex items-start gap-2">
+              <code className="block min-w-0 flex-1 rounded-md border border-foreground/10 bg-background/60 px-3 py-2 font-mono text-xs text-foreground/90 md:text-sm">
+                {hfSpaceCommand}
+              </code>
+              <Button
+                type="button"
+                onClick={() => void handleCopyCommand(hfSpaceCommand, "hf")}
+                variant="outline"
+                size="icon-sm"
+                className="shrink-0"
+                aria-label={copiedCommand === "hf" ? "Copied" : "Copy Hugging Face Space command"}
+              >
+                {copiedCommand === "hf" ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       <Card className="flex min-h-[68vh] flex-col border-foreground/10 bg-card/85 shadow-xl backdrop-blur">
         <CardHeader className="border-b border-border/60">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <BotIcon className="size-4 text-primary" />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <BotIcon className="size-4 shrink-0 text-primary" />
               <CardTitle className="text-base">Repository assistant</CardTitle>
-              {settings.model ? <Badge variant="outline">{settings.model}</Badge> : null}
+              {settings.model ? (
+                <Badge variant="outline" className="max-w-[10rem] truncate sm:max-w-none">
+                  {settings.model}
+                </Badge>
+              ) : null}
             </div>
             <Button
               onClick={() => {
@@ -343,9 +404,11 @@ export function HomePageClient() {
               }}
               size="sm"
               variant="outline"
+              className="shrink-0"
+              aria-label="Provider settings"
             >
               <Settings2Icon className="size-4" />
-              Provider settings
+              <span className="hidden sm:inline">Provider settings</span>
             </Button>
           </div>
           {modelsMessage ? (
